@@ -21,7 +21,7 @@ struct SettingsPage: View {
                     Spacer()
                     Toggle("Open at Login", isOn: Binding(get: { launchAtLogin }, set: { LoginItem.set($0); launchAtLogin = LoginItem.isEnabled }))
                         .labelsHidden()
-                        .toggleStyle(.switch)
+                        .toggleStyle(.setting)
                         .controlSize(.small)
                         .help("Start Stats Control automatically when you log in")
                 }
@@ -35,7 +35,7 @@ struct SettingsPage: View {
                         Spacer()
                         Toggle("Compact Menu Bar", isOn: Binding(get: { model.compactBar }, set: { model.compactBar = $0 }))
                             .labelsHidden()
-                            .toggleStyle(.switch)
+                            .toggleStyle(.setting)
                             .controlSize(.small)
                             .help("Show only one value in the menu bar. Values at or above the threshold appear next to it; hover to see all three.")
                     }

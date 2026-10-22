@@ -1,0 +1,22 @@
+{
+  "screen": [860, 580], "scale": 2,
+  "shots": [
+    {"duration": 1.2, "symbol": "main", "cursor": [260, 330], "caption": "CPU, GPU and memory, always in the menu bar",
+     "windows": [{"id": "w", "title": "Xcode", "rect": [30, 110, 340, 300]}]},
+    {"duration": 0.15, "move": 0.7, "target": "@item"},
+    {"duration": 0.9, "panel": "main", "symbol": "main", "target": "@item", "click": true, "caption": "The apps using the most CPU, updated live"},
+    {"duration": 0.1, "move": 0.5, "panel": "main", "symbol": "main", "target": "cpu", "point": [0.5, 0.6]},
+    {"duration": 0.9, "panel": "cpu-1", "symbol": "cpu-1", "target": "cpu", "point": [0.5, 0.6]},
+    {"duration": 0.9, "panel": "cpu-2", "symbol": "cpu-2", "target": "cpu", "point": [0.5, 0.6]},
+    {"duration": 0.2, "move": 0.5, "panel": "cpu-3", "symbol": "cpu-3", "target": "gpu", "point": [0.5, 0.6]},
+    {"duration": 0.9, "panel": "gpu", "symbol": "gpu", "target": "gpu", "point": [0.5, 0.6], "click": true, "caption": "Click a tile: the list sorts by GPU"},
+    {"duration": 0.9, "panel": "gpu-1", "symbol": "gpu-1", "target": "gpu", "point": [0.5, 0.6]},
+    {"duration": 0.9, "panel": "gpu-2", "symbol": "gpu-2", "target": "gpu", "point": [0.5, 0.6]},
+    {"duration": 0.2, "move": 0.5, "panel": "gpu-3", "symbol": "gpu-3", "target": "memory", "point": [0.5, 0.6]},
+    {"duration": 0.9, "panel": "memory", "symbol": "memory", "target": "memory", "point": [0.5, 0.6], "click": true, "caption": "… or by memory"},
+    {"duration": 0.9, "panel": "memory-1", "symbol": "memory-1", "target": "memory", "point": [0.5, 0.6]},
+    {"duration": 0.9, "panel": "memory-2", "symbol": "memory-2", "target": "memory", "point": [0.5, 0.6]},
+    {"duration": 0.2, "move": 0.6, "panel": "memory-3", "symbol": "memory-3", "target": "cpu", "point": [0.5, 0.6]},
+    {"duration": 1.6, "panel": "cpu-3", "symbol": "cpu-3", "target": "cpu", "point": [0.5, 0.6], "click": true, "caption": "Back to CPU with one click"}
+  ]
+}

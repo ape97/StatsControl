@@ -5,16 +5,21 @@ enum Demo {
     static let cpuCores = 10
     static let gpuCores: Int? = 16
     static let memoryTotal: UInt64 = 16 << 30
-    static let cpu = 0.34
-    static let gpu: Double? = 0.27
-    static let memoryUsed: UInt64 = 10 << 30
+    /// `--step n` advances the invented values by n samples, so the animation's frames show the list moving; step 0 is the still image.
+    static let step = Runtime.value(after: "--step").flatMap(Int.init) ?? 0
+    static let cpu = 0.34 + 0.05 * drift(0.5)
+    static let gpu: Double? = 0.27 + 0.04 * drift(1.3)
+    static let memoryUsed = UInt64(Double(10 << 30) * (1 + 0.02 * drift(2.2)))
+
+    /// A deterministic wobble in -2…2 that is exactly 0 at step 0.
+    private static func drift(_ seed: Double) -> Double { sin(Double(step) * 1.7 + seed) - sin(seed) }
 
     /// 2 minutes of plausible, smooth curves; a closed formula keeps every run identical.
     static var history: [Metric: [Double]] {
         func curve(_ base: Double, _ swing: Double, _ phase: Double, last: Double) -> [Double] {
             let n = 60   // = AppModel.historyLength
             var values = (0..<n).map { i -> Double in
-                let t = Double(i)
+                let t = Double(i + step)
                 return max(0.02, min(0.98, base + swing * (0.6 * sin(t / 5 + phase) + 0.4 * sin(t / 2.3 + phase * 2))))
             }
             values[n - 1] = last
@@ -48,7 +53,8 @@ enum Demo {
             var entry = ProcessEntry(id: row.name, name: row.name, pid: pid, uid: row.uid, app: nil, path: path.isEmpty ? "" : path + "/")
             for p in 0..<row.procs {
                 let n = Double(row.procs)
-                entry.add(pid: pid + pid_t(p), cpu: row.cpu / n, gpu: row.gpu / n, memory: UInt64(row.gigabytes / n * 1_073_741_824))
+                entry.add(pid: pid + pid_t(p), cpu: row.cpu * (1 + 0.3 * drift(Double(i))) / n, gpu: row.gpu * (1 + 0.3 * drift(Double(i) + 7)) / n,
+                          memory: UInt64(row.gigabytes * (1 + 0.07 * drift(Double(i) + 3)) / n * 1_073_741_824))
             }
             return entry
         }

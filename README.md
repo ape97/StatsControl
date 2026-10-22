@@ -1,19 +1,40 @@
-# Stats Control
+<p align="center">
+  <img src="docs/images/icon.png" alt="Stats Control icon" width="128">
+</p>
 
-[![macOS 26+](https://img.shields.io/badge/macOS-26%2B-black?logo=apple)](#requirements)
-[![Swift](https://img.shields.io/badge/Swift-SwiftUI-orange?logo=swift)](docs/DEVELOPMENT.md)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue)](LICENSE)
-[![AI-assisted](https://img.shields.io/badge/built%20with-AI%20assistance-8A2BE2)](#ai-assisted-development)
+<h1 align="center">Stats Control</h1>
 
-A lightweight menu bar monitor for macOS: CPU, GPU and memory at a glance, with a process list you can quit from.
+<p align="center">A lightweight menu bar monitor for macOS: CPU, GPU and memory at a glance, with a process list you can quit from.</p>
 
 <p align="center">
-  <img src="docs/images/main-dark.png" alt="Stats Control menu (dark)" width="400">
-  <img src="docs/images/main-light.png" alt="Stats Control menu (light)" width="400">
+  <a href="#requirements"><img src="https://img.shields.io/badge/macOS-26%2B-black?logo=apple" alt="macOS 26+"></a>
+  <a href="docs/DEVELOPMENT.md"><img src="https://img.shields.io/badge/Swift-SwiftUI-orange?logo=swift" alt="Swift"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue" alt="License: MIT"></a>
+  <a href="#ai-assisted-development"><img src="https://img.shields.io/badge/built%20with-AI%20assistance-8A2BE2" alt="AI-assisted"></a>
 </p>
 
 > [!NOTE]
 > This app was developed with AI assistance. See [AI-assisted development](#ai-assisted-development).
+
+## In action
+
+### Switching lists
+
+<p align="center">
+  <img src="docs/images/tabs.gif" alt="Clicking the CPU, GPU and memory tiles switches the process list" width="720">
+</p>
+
+Click CPU, GPU or Memory and the process list sorts by that metric. Values, history and the list update live while the menu is open.
+
+### Compact mode
+
+<p align="center">
+  <img src="docs/images/compact.gif" alt="Compact mode: memory slides into the menu bar when it crosses the threshold, all three values appear on hover" width="720">
+</p>
+
+The menu bar shows only the metric you pick. When a value reaches your threshold, the bar switches to it, and every high value stays visible until it drops back. Hover over the item to see all three values.
+
+<sub>The animations are rendered by the app itself from invented demo data; nothing on your Mac is recorded.</sub>
 
 ## Features
 
@@ -23,17 +44,12 @@ A lightweight menu bar monitor for macOS: CPU, GPU and memory at a glance, with 
 - **Quit from the menu**: click twice to force-quit, or right-click for a normal quit. System processes are protected.
 - **Light on resources**: no network, no telemetry, about 13 ms per measurement, refreshes slowly while the menu is closed.
 
-## Compact mode
+## Screenshots
 
 <p align="center">
-  <img src="docs/images/compact.gif" alt="Compact mode: memory slides into the menu bar when it crosses the threshold, all three values appear on hover" width="555">
+  <img src="docs/images/main-dark.png" alt="Stats Control menu (dark)" width="400">
+  <img src="docs/images/main-light.png" alt="Stats Control menu (light)" width="400">
 </p>
-
-The menu bar shows only the metric you pick. When a value reaches your threshold, the bar switches to it, and every high
-value stays visible until it drops back. Hover over the item to see all three values. The animation is rendered by the app itself
-with its real rules; only the values are scripted.
-
-## Screenshots
 
 <table>
   <tr>

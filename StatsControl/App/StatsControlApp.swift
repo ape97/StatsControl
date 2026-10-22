@@ -102,6 +102,7 @@ enum Snapshot {
             effect.cacheDisplay(in: effect.bounds, to: rep)
             try? rep.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: "\(base)-\(suffix).png"))
         }
+        DemoTargets.write(to: "\(base)-targets.json")
         writeBar([model.menuBarImage], to: "\(base)-symbol.png")
         if let dir = Runtime.value(after: "--timeline") { timeline(to: dir) }
         guard Runtime.value(after: "--compact") != nil else { return }

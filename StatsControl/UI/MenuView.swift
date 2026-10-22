@@ -36,6 +36,7 @@ struct MetricTiles: View {
                            selected: model.tab == metric) {
                     withAnimation(.snappy(duration: 0.25)) { model.select(metric) }
                 }
+                .demoTarget(metric.rawValue)
             }
         }
     }
