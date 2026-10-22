@@ -1,0 +1,149 @@
+import AppKit
+import ServiceManagement
+import SwiftUI
+
+@main
+struct StatsControlApp: App {
+    @NSApplicationDelegateAdaptor(AppDelegate.self) private var delegate
+    @State private var model = AppModel.shared
+
+    var body: some Scene {
+        MenuBarExtra(isInserted: .constant(!Runtime.headless)) {
+            // New identity after every close: settings page and list start fresh again.
+            MenuView()
+                .id(model.menuGeneration)
+                .environment(model)
+        } label: {
+            Image(nsImage: model.menuBarImage)
+        }
+        .menuBarExtraStyle(.window)
+    }
+}
+
+/// Launch modes without a menu bar item: developer snapshots and the self-test run invisibly.
+enum Runtime {
+    static let arguments = CommandLine.arguments
+    static let isSnapshot = arguments.contains("--snapshot")
+    static let isSelfTest = arguments.contains("--selftest")
+    static let headless = isSnapshot || isSelfTest
+    /// Invented, fixed content for promotional images; only together with `--snapshot`, never reads or stores user data.
+    static let isDemo = isSnapshot && arguments.contains("--demo")
+
+    static func value(after flag: String) -> String? {
+        guard let i = arguments.firstIndex(of: flag), i + 1 < arguments.count else { return nil }
+        return arguments[i + 1]
+    }
+}
+
+final class AppDelegate: NSObject, NSApplicationDelegate {
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        if let base = Runtime.value(after: "--snapshot") {
+            MainActor.assumeIsolated { Snapshot.render(to: base) }
+            NSApp.terminate(nil)
+        } else if let path = Runtime.value(after: "--selftest") {
+            MainActor.assumeIsolated { SelfTest.run(writingTo: path) }
+        } else {
+            LoginItem.enableOnFirstLaunch()
+        }
+    }
+}
+
+enum LoginItem {
+    static var isEnabled: Bool { Runtime.isDemo || SMAppService.mainApp.status == .enabled }
+
+    static func set(_ enabled: Bool) {
+        do {
+            if enabled { try SMAppService.mainApp.register() } else { try SMAppService.mainApp.unregister() }
+        } catch {
+            NSLog("Stats Control: login item failed: \(error)")
+        }
+    }
+
+    /// Register as a login item automatically on the very first launch.
+    static func enableOnFirstLaunch() {
+        let key = "loginItemConfigured"
+        guard !UserDefaults.standard.bool(forKey: key) else { return }
+        set(true)
+        UserDefaults.standard.set(true, forKey: key)
+    }
+}
+
+/// Developer helper: renders the menu content invisibly to PNG files (light and dark) without showing windows.
+/// Usage: StatsControl --snapshot /path/base [--tab cpu|gpu|memory] [--settings] [--armed] [--compact cpu|gpu|memory] [--demo]
+///   →  base-light.png, base-dark.png, base-symbol.png (menu bar, double resolution);
+///      with --compact additionally base-animation.png (transitions of the compact bar frame by frame, fixed values)
+enum Snapshot {
+    @MainActor
+    static func render(to base: String) {
+        let model = AppModel.shared
+        model.prepareSnapshot(armed: Runtime.arguments.contains("--armed"))
+        for (suffix, name) in [("light", NSAppearance.Name.aqua), ("dark", .darkAqua)] {
+            let appearance = NSAppearance(named: name)!
+            let effect = NSVisualEffectView()
+            effect.material = .popover
+            effect.state = .active
+            effect.appearance = appearance
+            let host = NSHostingView(rootView: MenuView().environment(model))
+            host.appearance = appearance
+            host.layoutSubtreeIfNeeded()
+            RunLoop.main.run(until: Date().addingTimeInterval(0.3))
+            let size = host.fittingSize
+            effect.frame = NSRect(origin: .zero, size: size)
+            host.frame = effect.bounds
+            effect.addSubview(host)
+            let window = NSWindow(contentRect: effect.frame, styleMask: .borderless, backing: .buffered, defer: false)
+            window.appearance = appearance
+            window.contentView = effect
+            effect.layoutSubtreeIfNeeded()
+            RunLoop.main.run(until: Date().addingTimeInterval(0.5))
+            guard let rep = effect.bitmapImageRepForCachingDisplay(in: effect.bounds) else { continue }
+            effect.cacheDisplay(in: effect.bounds, to: rep)
+            try? rep.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: "\(base)-\(suffix).png"))
+        }
+        writeBar([model.menuBarImage], to: "\(base)-symbol.png")
+        guard Runtime.value(after: "--compact") != nil else { return }
+        // One transition per row: all → RAM only (high), swap CPU ↔ RAM, CPU → CPU + RAM.
+        let values = [23, 8, 51]
+        let steps: [CGFloat] = [0, 0.2, 0.4, 0.6, 0.8, 1]
+        let rows: [(MenuBarLabel.Layout, MenuBarLabel.Layout)] = [
+            (.full, .showing([false, false, true])),
+            (.showing([true, false, false]), .showing([false, false, true])),
+            (.showing([true, false, false]), .showing([true, false, true])),
+        ]
+        writeBar(rows.flatMap { from, to in steps.map { MenuBarLabel.image(values, layout: from.blended(to: to, $0)) } },
+                 to: "\(base)-animation.png", perRow: steps.count)
+    }
+
+    /// Menu bar images on a light and a dark strip, double resolution, `perRow` images per row.
+    @MainActor
+    private static func writeBar(_ icons: [NSImage], to path: String, perRow: Int = 1) {
+        let cell = NSSize(width: MenuBarLabel.width + 16, height: 24)
+        let lines = (icons.count + perRow - 1) / perRow
+        let size = NSSize(width: cell.width * CGFloat(perRow), height: cell.height * CGFloat(lines))
+        let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: Int(size.width) * 2, pixelsHigh: Int(size.height) * 4,
+                                   bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
+                                   colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)!
+        rep.size = NSSize(width: size.width, height: size.height * 2)
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
+        for (row, background, ink) in [(1, NSColor.white, NSColor.black), (0, NSColor(white: 0.16, alpha: 1), NSColor.white)] {
+            let frame = NSRect(x: 0, y: CGFloat(row) * size.height, width: size.width, height: size.height)
+            background.setFill()
+            frame.fill()
+            for (i, icon) in icons.enumerated() {
+                let tinted = NSImage(size: icon.size, flipped: false) { rect in
+                    icon.draw(in: rect)
+                    ink.set()
+                    rect.fill(using: .sourceIn)
+                    return true
+                }
+                // Right-aligned as in the bar: items grow to the left.
+                let x = cell.width * CGFloat(i % perRow + 1) - 8 - icon.size.width
+                let y = frame.maxY - cell.height * CGFloat(i / perRow + 1) + (cell.height - icon.size.height) / 2
+                tinted.draw(in: NSRect(x: x, y: y, width: icon.size.width, height: icon.size.height))
+            }
+        }
+        NSGraphicsContext.restoreGraphicsState()
+        try? rep.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: path))
+    }
+}
