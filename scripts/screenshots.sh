@@ -18,3 +18,18 @@ for page in $PAGES; do
   build/Build/Products/Release/$BIN.app/Contents/MacOS/$BIN --snapshot $RAW/${page%%:*} ${=page#*:} --demo >/dev/null 2>&1
 done
 swift scripts/compose.swift $RAW docs/images $COLORS ${PAGES%%:*}
+
+# The compact mode animation: the app writes the menu bar symbol frame by frame, compose.swift puts each into the menu bar,
+# ffmpeg joins them into a looping GIF at double resolution with one shared palette (skipped without ffmpeg: brew install ffmpeg).
+FRAMES=build/screenshots/frames
+rm -rf $FRAMES; mkdir -p $FRAMES/out
+build/Build/Products/Release/$BIN.app/Contents/MacOS/$BIN --snapshot $FRAMES/menu --demo --timeline $FRAMES >/dev/null 2>&1
+swift scripts/compose.swift --frames $FRAMES $FRAMES/out $COLORS
+if command -v ffmpeg >/dev/null; then
+  ffmpeg -v error -y -f concat -i $FRAMES/out/frames.txt \
+    -vf "split[a][b];[a]palettegen=max_colors=128:stats_mode=full[p];[b][p]paletteuse=dither=sierra2_4a" \
+    -fps_mode vfr -loop 0 docs/images/compact.gif
+  print docs/images/compact.gif
+else
+  print "ffmpeg not found: docs/images/compact.gif not updated"
+fi

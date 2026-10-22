@@ -7,10 +7,10 @@
 
 A lightweight menu bar monitor for macOS: CPU, GPU and memory at a glance, with a process list you can quit from.
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/main-dark.png">
-  <img src="docs/images/main-light.png" alt="Stats Control menu" width="460">
-</picture>
+<p align="center">
+  <img src="docs/images/main-dark.png" alt="Stats Control menu (dark)" width="400">
+  <img src="docs/images/main-light.png" alt="Stats Control menu (light)" width="400">
+</p>
 
 > [!NOTE]
 > This app was developed with AI assistance. See [AI-assisted development](#ai-assisted-development).
@@ -23,16 +23,26 @@ A lightweight menu bar monitor for macOS: CPU, GPU and memory at a glance, with 
 - **Quit from the menu**: click twice to force-quit, or right-click for a normal quit. System processes are protected.
 - **Light on resources**: no network, no telemetry, about 13 ms per measurement, refreshes slowly while the menu is closed.
 
+## Compact mode
+
+<p align="center">
+  <img src="docs/images/compact.gif" alt="Compact mode: memory slides into the menu bar when it crosses the threshold, all three values appear on hover" width="555">
+</p>
+
+The menu bar shows only the metric you pick. When a value reaches your threshold, the bar switches to it, and every high
+value stays visible until it drops back. Hover over the item to see all three values. The animation is rendered by the app itself
+with its real rules; only the values are scripted.
+
 ## Screenshots
 
 <table>
   <tr>
-    <td align="center"><img src="docs/images/gpu-light.png" width="360"><br>GPU list</td>
-    <td align="center"><img src="docs/images/memory-light.png" width="360"><br>Memory list</td>
+    <td align="center"><img src="docs/images/gpu-dark.png" width="360"><br>GPU list</td>
+    <td align="center"><img src="docs/images/memory-dark.png" width="360"><br>Memory list</td>
   </tr>
   <tr>
-    <td align="center"><img src="docs/images/confirm-light.png" width="360"><br>Quit confirmation (second click force-quits)</td>
-    <td align="center"><img src="docs/images/settings-light.png" width="360"><br>Settings with compact menu bar</td>
+    <td align="center"><img src="docs/images/confirm-dark.png" width="360"><br>Quit confirmation (second click force-quits)</td>
+    <td align="center"><img src="docs/images/settings-dark.png" width="360"><br>Settings with compact menu bar</td>
   </tr>
 </table>
 

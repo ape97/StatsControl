@@ -31,7 +31,7 @@ docs/                       PLATFORM.md (tested macOS/Xcode), images/ (README sc
 | `./scripts/check.sh` | The gate. Warning-free Release build, invisible snapshots of every page into `build/check/`, self-test. Ends with `RESULT: GREEN` or `RED`. Changes nothing on the system. |
 | `./scripts/deploy.sh` | Runs the check; only if green, installs to `/Applications` and restarts the app. |
 | `./scripts/status.sh` | Shows the installed version, running state, login item and signature, and compares the system with the last tested one in `docs/PLATFORM.md`. |
-| `./scripts/screenshots.sh` | Renders every page with demo data and composes the README images in `docs/images/`. |
+| `./scripts/screenshots.sh` | Renders every page with demo data and composes the README images in `docs/images/`: every page in dark mode, the main page in light mode too, and `compact.gif` (needs `ffmpeg`, `brew install ffmpeg`). |
 | `./scripts/release.sh` | Builds the downloadable, ad-hoc signed and stripped `build/release/StatsControl-<version>.zip`. |
 | `swift scripts/icon.swift <out.png>` | Draws the app icon (used when the icon changes). |
 
@@ -45,6 +45,10 @@ The app binary (`StatsControl.app/Contents/MacOS/StatsControl`) understands a fe
   and exits. No window is shown. Pages are listed in `scripts/check.sh`.
 - `--demo` (with `--snapshot`) replaces live measurements with fixed, invented data (`Stats/Demo.swift`), so screenshots
   never show your own processes.
+- `--timeline <dir>` (with `--snapshot`) writes the frames of the compact mode animation: one menu bar symbol per frame
+  and `frames.json` with durations, captions and pointer positions. The values are scripted, while threshold, hysteresis,
+  column choice and easing are the app's own. `scripts/compose.swift --frames` places each frame in a menu bar and
+  `scripts/screenshots.sh` joins them into `docs/images/compact.gif`.
 - `--selftest <file.json>` measures, groups processes and quits a test process it started itself, then writes the
   result as JSON.
 

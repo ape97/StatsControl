@@ -360,6 +360,7 @@ final class AppModel {
 
     /// For snapshots: measure values as if the menu had been open for a few seconds.
     func prepareSnapshot(armed: Bool) {
+        isMenuOpen = true   // a snapshot shows the open menu, and while it is open the bar shows all three values
         if Runtime.isDemo {
             live.cpu = Demo.cpu
             live.gpu = Demo.gpu

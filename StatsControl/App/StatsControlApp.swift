@@ -70,8 +70,10 @@ enum LoginItem {
 
 /// Developer helper: renders the menu content invisibly to PNG files (light and dark) without showing windows.
 /// Usage: StatsControl --snapshot /path/base [--tab cpu|gpu|memory] [--settings] [--armed] [--compact cpu|gpu|memory] [--demo]
+///                     [--timeline dir]
 ///   →  base-light.png, base-dark.png, base-symbol.png (menu bar, double resolution);
-///      with --compact additionally base-animation.png (transitions of the compact bar frame by frame, fixed values)
+///      with --compact additionally base-animation.png (transitions of the compact bar frame by frame, fixed values);
+///      with --timeline the frames of the README's compact mode animation in dir (see `timeline(to:)`)
 enum Snapshot {
     @MainActor
     static func render(to base: String) {
@@ -101,6 +103,7 @@ enum Snapshot {
             try? rep.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: "\(base)-\(suffix).png"))
         }
         writeBar([model.menuBarImage], to: "\(base)-symbol.png")
+        if let dir = Runtime.value(after: "--timeline") { timeline(to: dir) }
         guard Runtime.value(after: "--compact") != nil else { return }
         // One transition per row: all → RAM only (high), swap CPU ↔ RAM, CPU → CPU + RAM.
         let values = [23, 8, 51]
@@ -112,6 +115,61 @@ enum Snapshot {
         ]
         writeBar(rows.flatMap { from, to in steps.map { MenuBarLabel.image(values, layout: from.blended(to: to, $0)) } },
                  to: "\(base)-animation.png", perRow: steps.count)
+    }
+
+    /// Writes the compact mode animation for the README to `dir`: one symbol strip per frame plus frames.json, which
+    /// scripts/compose.swift turns into menu bar frames. The values are scripted, but threshold, hysteresis, column choice
+    /// and the 0.5 s easing are the app's own, so the animation shows exactly what the menu bar does.
+    @MainActor
+    static func timeline(to dir: String) {
+        struct Frame: Encodable { let symbol: String; let duration: Double; let caption: String; let cursor: [CGFloat]? }
+        struct Step { let seconds: Double; let values: [Int]; let caption: String; var cursor: CGPoint? = nil; var hover = false }
+        let fps = 25.0, threshold = 50, preferred = Metric.cpu
+        // Cursor positions: points left of the symbol strip's right edge and below the screen's top edge.
+        let outside = CGPoint(x: 70, y: 76), onItem = CGPoint(x: 8 + MenuBarLabel.width / 6, y: 20)
+        let script = [
+            Step(seconds: 1, values: [12, 6, 41], caption: "Compact mode: only CPU in the menu bar"),
+            Step(seconds: 1, values: [14, 7, 42], caption: "Compact mode: only CPU in the menu bar"),
+            Step(seconds: 1, values: [11, 6, 44], caption: "Compact mode: only CPU in the menu bar"),
+            Step(seconds: 1.4, values: [13, 6, 58], caption: "Memory crosses the threshold and takes its place"),
+            Step(seconds: 1, values: [12, 7, 61], caption: "Memory crosses the threshold and takes its place"),
+            Step(seconds: 1.4, values: [63, 8, 60], caption: "Every high value stays visible"),
+            Step(seconds: 1, values: [66, 7, 59], caption: "Every high value stays visible"),
+            Step(seconds: 1.6, values: [18, 6, 43], caption: "All values back to normal: back to CPU only"),
+            Step(seconds: 0.6, values: [16, 6, 42], caption: "Hover to see all three values", cursor: onItem),
+            Step(seconds: 2, values: [15, 7, 42], caption: "Hover to see all three values", cursor: onItem, hover: true),
+            Step(seconds: 1.2, values: [14, 6, 41], caption: "", cursor: outside),
+        ]
+        var frames: [Frame] = [], icons: [NSImage] = []
+        var hot = Set<Metric>(), cursor: CGPoint? = nil
+        var layout = MenuBarLabel.Layout.showing(AppModel.compactColumns(hot: hot, preferred: preferred))
+        func add(_ values: [Int], _ shown: MenuBarLabel.Layout, _ seconds: Double, _ caption: String, _ at: CGPoint?) {
+            icons.append(MenuBarLabel.image(values, layout: shown))
+            frames.append(Frame(symbol: String(format: "frame-%03d-symbol.png", frames.count), duration: (seconds * 100).rounded() / 100,
+                                caption: caption, cursor: at.map { [$0.x.rounded(), $0.y.rounded()] }))
+        }
+        for step in script {
+            hot = AppModel.hotMetrics(step.values, previous: hot, threshold: threshold)
+            let target = step.hover ? .full : MenuBarLabel.Layout.showing(AppModel.compactColumns(hot: hot, preferred: preferred))
+            // Frame by frame while the cursor moves or the columns slide, then one still frame for the rest of the step.
+            let moving = step.cursor != cursor && !step.hover, sliding = target != layout
+            let count = moving ? Int(0.4 * fps) : sliding ? Int(0.5 * fps) : 0
+            for i in 0..<count {
+                let t = Double(i + 1) / Double(count), eased = t < 0.5 ? 4 * t * t * t : 1 - pow(-2 * t + 2, 3) / 2
+                let at = moving ? step.cursor.map { to in
+                    let from = cursor ?? outside
+                    return CGPoint(x: from.x + (to.x - from.x) * eased, y: from.y + (to.y - from.y) * eased)
+                } : cursor
+                add(step.values, sliding ? layout.blended(to: target, eased) : layout, 1 / fps, step.caption, at)
+            }
+            if moving { cursor = step.cursor }
+            layout = target
+            add(step.values, layout, step.seconds - Double(count) / fps, step.caption, cursor)
+            if step.cursor == outside { cursor = nil }
+        }
+        try? FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
+        for (frame, icon) in zip(frames, icons) { writeBar([icon], to: "\(dir)/\(frame.symbol)") }
+        try? JSONEncoder().encode(frames).write(to: URL(fileURLWithPath: "\(dir)/frames.json"))
     }
 
     /// Menu bar images on a light and a dark strip, double resolution, `perRow` images per row.
