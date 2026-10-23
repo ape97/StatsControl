@@ -42,7 +42,9 @@ The menu bar shows only the metric you pick. When a value reaches your threshold
 - **Compact mode**: show just one metric; the others slide in only when they cross a threshold you choose.
 - **Process list**: apps sorted by CPU, GPU or memory, helper processes grouped under their app, 2-minute history per metric.
 - **Quit from the menu**: click twice to force-quit, or right-click for a normal quit. System processes are protected.
-- **Light on resources**: no network, no telemetry, about 13 ms per measurement, refreshes slowly while the menu is closed.
+- **Update notice** (optional, off by default): once a day the app looks up the latest release on GitHub and shows
+  "Version X available" in the menu, with **Download** (opens the release page) and **Skip**.
+- **Light on resources**: no telemetry, about 13 ms per measurement, refreshes slowly while the menu is closed.
 
 ## Screenshots
 
@@ -59,6 +61,10 @@ The menu bar shows only the metric you pick. When a value reaches your threshold
   <tr>
     <td align="center"><img src="docs/images/confirm-dark.png" width="360"><br>Quit confirmation (second click force-quits)</td>
     <td align="center"><img src="docs/images/settings-dark.png" width="360"><br>Settings with compact menu bar</td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/images/update-dark.png" width="360"><br>Update notice in the menu</td>
+    <td></td>
   </tr>
 </table>
 
@@ -82,6 +88,9 @@ To uninstall, quit it from the menu and move it to the Trash.
 - Click the menu bar item to open the menu. Click a tile (CPU, GPU, Memory) to sort the list by it.
 - Hover a row and click the quit button twice to force-quit; right-click a row for **Quit** or **Force Quit**.
 - The activity icon in the footer opens Activity Monitor.
+- Settings (gear icon): **Compact Menu Bar**, **Check for Updates** and **Open at Login**.
+- **Updates**: with **Check for Updates** on, a new version appears in the menu. **Download** opens the release page; replace the
+  app in `/Applications` with the new one. Your settings stay.
 
 ## Build from source
 
@@ -98,8 +107,10 @@ No Apple developer account is needed. Project layout, scripts, signing, screensh
 ## Permissions and privacy
 
 Stats Control needs no special permissions. It reads process statistics of the current user with `proc_pid_rusage` and
-other processes through `ps`, and it can only quit processes of the current user. Everything stays on your Mac:
-no network access, no telemetry. The only stored data are your settings in the app's user defaults.
+other processes through `ps`, and it can only quit processes of the current user. Everything stays on your Mac, no telemetry.
+The only network access is the optional update check (off by default): once a day one request to `api.github.com` for the
+latest release number of this repository. Nothing about you or your Mac is sent. The only stored data are your settings in the
+app's user defaults.
 
 ## AI-assisted development
 

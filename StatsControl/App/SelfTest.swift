@@ -24,6 +24,7 @@ enum SelfTest {
             model.sampleProcessesNow()
             checkValues(model)
             checkProcesses(model, sleeper: sleeper)
+            failures += UpdateCheck.selfTest()
             after(0.7) { finish(model, sleeper: sleeper, path: path) }
         }
     }

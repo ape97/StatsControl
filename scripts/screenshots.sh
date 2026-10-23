@@ -6,7 +6,7 @@ cd "${0:A:h}/.."
 BIN=StatsControl
 COLORS=(5CDB85 084559)   # the icon's gradient colours, see scripts/icon.swift
 # page:snapshot arguments (the first page also provides the menu bar icon)
-PAGES=("main:--tab cpu" "gpu:--tab gpu" "memory:--tab memory" "confirm:--tab cpu --armed" "settings:--settings --compact cpu")
+PAGES=("main:--tab cpu" "gpu:--tab gpu" "memory:--tab memory" "confirm:--tab cpu --armed" "settings:--settings --compact cpu" "update:--update 1.4.0")
 # Extra states only the animations use (rendered, not composed): each tab a few samples later.
 EXTRA=()
 for tab in cpu gpu memory; do for step in 1 2 3; do EXTRA+=("$tab-$step:--tab $tab --step $step"); done; done

@@ -25,7 +25,9 @@ enum Runtime {
     static let arguments = CommandLine.arguments
     static let isSnapshot = arguments.contains("--snapshot")
     static let isSelfTest = arguments.contains("--selftest")
-    static let headless = isSnapshot || isSelfTest
+    /// Manual test of the update check from the installed app: one request, result as JSON, no menu.
+    static let isCheckUpdate = arguments.contains("--check-update")
+    static let headless = isSnapshot || isSelfTest || isCheckUpdate
     /// Invented, fixed content for promotional images; only together with `--snapshot`, never reads or stores user data.
     static let isDemo = isSnapshot && arguments.contains("--demo")
 
@@ -42,8 +44,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             NSApp.terminate(nil)
         } else if let path = Runtime.value(after: "--selftest") {
             MainActor.assumeIsolated { SelfTest.run(writingTo: path) }
+        } else if let path = Runtime.value(after: "--check-update") {
+            MainActor.assumeIsolated { UpdateCheck.report(writingTo: path) }
         } else {
             LoginItem.enableOnFirstLaunch()
+            MainActor.assumeIsolated { UpdateCheck.shared.start() }
         }
     }
 }
@@ -69,7 +74,7 @@ enum LoginItem {
 }
 
 /// Developer helper: renders the menu content invisibly to PNG files (light and dark) without showing windows.
-/// Usage: StatsControl --snapshot /path/base [--tab cpu|gpu|memory] [--settings] [--armed] [--compact cpu|gpu|memory] [--demo]
+/// Usage: StatsControl --snapshot /path/base [--tab cpu|gpu|memory] [--settings] [--armed] [--compact cpu|gpu|memory] [--update <version>] [--demo]
 ///                     [--timeline dir]
 ///   →  base-light.png, base-dark.png, base-symbol.png (menu bar, double resolution);
 ///      with --compact additionally base-animation.png (transitions of the compact bar frame by frame, fixed values);

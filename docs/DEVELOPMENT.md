@@ -49,8 +49,11 @@ The app binary (`StatsControl.app/Contents/MacOS/StatsControl`) understands a fe
   and `frames.json` with durations, captions and pointer positions. The values are scripted, while threshold, hysteresis,
   column choice and easing are the app's own. `scripts/compose.swift --frames` places each frame in a menu bar and
   `scripts/screenshots.sh` joins them into `docs/images/compact.gif`.
+- `--update <version>` (with `--snapshot`) pretends a newer release exists, so the update notice is rendered.
 - `--selftest <file.json>` measures, groups processes and quits a test process it started itself, then writes the
   result as JSON.
+- `--check-update <file.json>` asks GitHub once for the latest release, exactly like the update check, and writes the
+  result as JSON (current and latest version, whether the notice would show). Manual test only, never part of `check.sh`.
 
 ## Signing
 
@@ -65,14 +68,24 @@ DEVELOPMENT_TEAM = YOURTEAMID
 
 ## Releasing
 
+Every published release reaches users who switched on **Check for Updates** within a day, so releases are deliberate:
+
+- Only GitHub releases count: commits, pushes and tags never trigger the notice, and neither do drafts or pre-releases
+  (`releases/latest` skips them). Use `gh release create … --prerelease` for a build someone should try first.
+- Bundle small changes; documentation, images and scripts alone don't need a release.
+- Tag every release `v<version>` with a plain numeric version (`1.10.0` is newer than `1.9.3`).
+- Never publish a release just to test the notice: build a zip with a lower version locally and run it with `--check-update`.
+
 1. Raise `MARKETING_VERSION` in `project.yml`.
 2. `./scripts/check.sh` must be green; refresh the README images with `./scripts/screenshots.sh` if the UI changed.
 3. `./scripts/release.sh` builds the zip. It always signs ad hoc, even with `Local.xcconfig` present, because a personal
    certificate would put the developer's name into the signature, and it strips the binary so no build paths remain.
+   The signature's designated requirement is the bundle identifier instead of the ad-hoc default (one exact build), so
+   permissions granted in System Settings stay valid after an update.
 4. Commit, tag and publish, for example with the GitHub CLI:
    ```sh
-   git tag v1.2.0 && git push --tags
-   gh release create v1.2.0 build/release/StatsControl-1.2.0.zip --title "Stats Control 1.2.0" --notes "…"
+   git tag -a v1.3.0 -m "Stats Control 1.3.0" && git push origin v1.3.0
+   gh release create v1.3.0 build/release/StatsControl-1.3.0.zip --title "Stats Control 1.3.0" --notes "…"
    ```
 
 ## After a macOS or Xcode update
@@ -93,6 +106,10 @@ interfaces most likely to change.
 - While the menu is open the layout never changes structurally (hidden quit buttons, rows by position, list height only
   grows), because every structural change makes macOS reset the mouse pointer. Text animations that change size are
   avoided too, since CoreGraphics caches every intermediate glyph bitmap.
+- **Update check** (`App/UpdateCheck.swift`, off by default): at most once a day (on launch, when the menu opens, after
+  waking; no timer) a single `GET https://api.github.com/repos/ape97/StatsControl/releases/latest`. Only `tag_name` and
+  `html_url` are read; a newer version shows a notice in the menu whose **Download** opens the release page. Nothing is
+  downloaded or installed by the app.
 - `MenuBarExtra` with `.window` style clips multi-line text unless it uses `.fixedSize(horizontal: false, vertical: true)`;
   snapshots don't show this, so check the real menu after layout changes.
 

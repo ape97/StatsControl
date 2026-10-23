@@ -12,6 +12,7 @@ struct MenuView: View {
             } else {
                 VStack(spacing: 8) {
                     MetricTiles()
+                    UpdateNotice()
                     ProcessModule()
                 }
                 .transition(.move(edge: .leading).combined(with: .opacity))
@@ -20,6 +21,7 @@ struct MenuView: View {
         }
         .padding(10)
         .frame(width: 380)
+        .onAppear { UpdateCheck.shared.checkIfDue() }
     }
 }
 
@@ -301,11 +303,13 @@ struct KillButton: View {
 
 // MARK: Footer
 
+/// Footer as in all apps: app icon (settings page only) and name on the left, app-specific buttons if any, then Settings and Quit on the right.
 struct FooterBar: View {
     @Binding var showSettings: Bool
 
     var body: some View {
         HStack(spacing: 6) {
+            if showSettings { AppIcon(size: 16) }
             Text("Stats Control")
                 .font(.system(size: 10.5, weight: .medium))
                 .foregroundStyle(.tertiary)
